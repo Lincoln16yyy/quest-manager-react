@@ -1,6 +1,9 @@
 function Tarefa({ item, index, alternarConcluida, removerTarefa }) {
+  // Se for uma tarefa antiga que não tinha dificuldade, assume "comum"
+  const classeDificuldade = item.dificuldade || 'comum';
+
   return (
-    <li className={`item-tarefa ${item.concluida ? 'concluida' : ''}`}>
+    <li className={`item-tarefa ${classeDificuldade} ${item.concluida ? 'concluida' : ''}`}>
       <div className="conteudo-tarefa">
         <input
           type="checkbox"
