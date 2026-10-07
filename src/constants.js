@@ -9,6 +9,8 @@ export const STORAGE_KEYS = {
   streak: 'streak-lincoln',
   ultimoDia: 'ultimo-dia-lincoln',
   somMudo: 'som-mudo-lincoln',
+  conquistas: 'conquistas-lincoln',
+  epicas: 'stats-epicas-lincoln',
 };
 
 export const DIFICULDADES = {
@@ -28,3 +30,60 @@ export const TITULOS = [
 
 export const obterTitulo = (nivelAtual) =>
   TITULOS.find(({ nivelMinimo }) => nivelAtual >= nivelMinimo).titulo;
+
+/**
+ * Conquistas desbloqueáveis. `condicao` recebe os stats do jogador:
+ * { concluidas, epicas, level, streak }
+ * Conquista desbloqueada nunca é revogada.
+ */
+export const CONQUISTAS = [
+  {
+    id: 'primeira-quest',
+    emoji: '🗡️',
+    nome: 'Primeira Quest',
+    descricao: 'Conclua sua primeira quest',
+    condicao: (s) => s.concluidas >= 1,
+  },
+  {
+    id: 'dez-quests',
+    emoji: '⚔️',
+    nome: 'Dez Missões',
+    descricao: 'Conclua 10 quests',
+    condicao: (s) => s.concluidas >= 10,
+  },
+  {
+    id: 'veterano',
+    emoji: '👑',
+    nome: 'Veterano da Guilda',
+    descricao: 'Conclua 50 quests',
+    condicao: (s) => s.concluidas >= 50,
+  },
+  {
+    id: 'cacador-epicas',
+    emoji: '💎',
+    nome: 'Caçador de Épicas',
+    descricao: 'Conclua 10 quests épicas',
+    condicao: (s) => s.epicas >= 10,
+  },
+  {
+    id: 'em-chamas',
+    emoji: '🔥',
+    nome: 'Em Chamas',
+    descricao: 'Mantenha uma sequência de 7 dias',
+    condicao: (s) => s.streak >= 7,
+  },
+  {
+    id: 'nivel-10',
+    emoji: '⚡',
+    nome: 'Poder Crescente',
+    descricao: 'Alcance o nível 10',
+    condicao: (s) => s.level >= 10,
+  },
+  {
+    id: 'heroi-lendario',
+    emoji: '🌟',
+    nome: 'Herói Lendário',
+    descricao: 'Alcance o nível 20',
+    condicao: (s) => s.level >= 20,
+  },
+];

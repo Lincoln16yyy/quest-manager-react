@@ -5,10 +5,13 @@ import PainelStatus from './components/PainelStatus';
 import FormQuest from './components/FormQuest';
 import AbasFiltro from './components/AbasFiltro';
 import Tarefa from './components/Tarefa';
+import PainelConquistas from './components/PainelConquistas';
+import ToastConquista from './components/ToastConquista';
 import useLocalStorage from './hooks/useLocalStorage';
-import { STORAGE_KEYS, DIFICULDADES } from './constants';
+import { STORAGE_KEYS, DIFICULDADES, CONQUISTAS } from './constants';
 import { aplicarXp } from './utils/xp';
 import { calcularStreak, streakVisivel } from './utils/datas';
+import { verificarNovasConquistas } from './utils/conquistas';
 import { tocarLevelUp } from './utils/sons';
 import './App.css';
 
@@ -37,6 +40,27 @@ function App() {
   const [streak, setStreak] = useLocalStorage(STORAGE_KEYS.streak, 0);
   const [ultimoDia, setUltimoDia] = useLocalStorage(STORAGE_KEYS.ultimoDia, null);
   const [somMudo, setSomMudo] = useLocalStorage(STORAGE_KEYS.somMudo, false);
+  const [conquistas, setConquistas] = useLocalStorage(STORAGE_KEYS.conquistas, []);
+  const [epicasConcluidas, setEpicasConcluidas] = useLocalStorage(STORAGE_KEYS.epicas, 0);
+  const [toastConquista, setToastConquista] = useState(null);
+
+  /**
+   * Desbloqueia conquistas com base nos PRÓXIMOS stats (já calculados
+   * no handler do evento). Conquista desbloqueada nunca é revogada.
+   */
+  const checarConquistas = (proximosStats) => {
+    const novas = verificarNovasConquistas(conquistas, proximosStats);
+    if (novas.length === 0) return;
+
+    setConquistas((atual) => [...atual, ...novas.map((c) => c.id)]);
+    setToastConquista(novas[novas.length - 1]); // mostra a mais recente
+    confetti({
+      particleCount: 80,
+      spread: 60,
+      origin: { y: 0.7 },
+      colors: ['#fbbf24', '#f59e0b', '#fef3c7'],
+    });
+  };
 
   /**
    * Aplica ganho/perda de XP resolvendo level up/down na hora.
@@ -60,6 +84,7 @@ function App() {
 
     setLevel(novo.level);
     setXp(novo.xp);
+    return novo; // handlers usam o retorno para checar conquistas
   };
 
   const adicionarTarefa = (texto, dificuldade) => {
@@ -71,7 +96,7 @@ function App() {
   /** Registra a conclusão de hoje na sequência diária (streak). */
   const registrarStreak = () => {
     const resultado = calcularStreak({ streak, ultimoDia });
-    if (!resultado.mudou) return;
+    if (!resultado.mudou) return streak;
 
     setStreak(resultado.streak);
     setUltimoDia(resultado.ultimoDia);
@@ -85,6 +110,7 @@ function App() {
         colors: ['#f97316', '#fbbf24'],
       });
     }
+    return resultado.streak;
   };
 
   const editarTarefa = (id, novoTexto) => {
@@ -101,6 +127,9 @@ function App() {
     if (item.concluida) {
       ganharXp(-xpDaTarefa(item));
       setHistoricoConcluidas((atual) => Math.max(0, atual - 1));
+      if ((item.dificuldade || 'comum') === 'epica') {
+        setEpicasConcluidas((atual) => Math.max(0, atual - 1));
+      }
     }
     setListaTarefas(listaTarefas.filter((t) => t.id !== id));
   };
@@ -110,10 +139,31 @@ function App() {
     if (!item) return;
 
     const novoStatus = !item.concluida;
-    ganharXp(novoStatus ? xpDaTarefa(item) : -xpDaTarefa(item));
-    setHistoricoConcluidas((atual) => (novoStatus ? atual + 1 : Math.max(0, atual - 1)));
+    const ehEpica = (item.dificuldade || 'comum') === 'epica';
 
-    if (novoStatus) registrarStreak();
+    // Calcula os próximos valores de cada stat...
+    const progresso = ganharXp(novoStatus ? xpDaTarefa(item) : -xpDaTarefa(item));
+    const novasConcluidas = novoStatus
+      ? historicoConcluidas + 1
+      : Math.max(0, historicoConcluidas - 1);
+    const novasEpicas = ehEpica
+      ? novoStatus
+        ? epicasConcluidas + 1
+        : Math.max(0, epicasConcluidas - 1)
+      : epicasConcluidas;
+    const novaStreak = novoStatus ? registrarStreak() : streak;
+
+    // ...e persiste tudo
+    setHistoricoConcluidas(novasConcluidas);
+    if (ehEpica) setEpicasConcluidas(novasEpicas);
+
+    // Conquistas são checadas com os valores futuros, sem efeito colateral em efeito
+    checarConquistas({
+      concluidas: novasConcluidas,
+      epicas: novasEpicas,
+      level: progresso.level,
+      streak: novaStreak,
+    });
 
     if (novoStatus && item.dificuldade === 'epica') {
       confetti({
@@ -136,6 +186,13 @@ function App() {
       : 100;
   const poderTotal = level * 15 + historicoConcluidas * 5;
   const sequenciaExibida = streakVisivel({ streak, ultimoDia });
+
+  // Exibição deriva dos stats (jogadores antigos veem suas conquistas na hora);
+  // o registro persistido serve para não repetir a celebração
+  const statsAtuais = { concluidas: historicoConcluidas, epicas: epicasConcluidas, level, streak };
+  const conquistasExibidas = CONQUISTAS.filter(
+    (c) => conquistas.includes(c.id) || c.condicao(statsAtuais)
+  ).map((c) => c.id);
 
   const tarefasFiltradas = listaTarefas.filter((tarefa) => {
     if (filtro === 'ativas') return !tarefa.concluida;
@@ -178,6 +235,10 @@ function App() {
           <p className="empty-state">{MENSAGENS_VAZIAS[filtro]}</p>
         )}
       </ul>
+
+      <PainelConquistas desbloqueadas={conquistasExibidas} />
+
+      <ToastConquista conquista={toastConquista} onFechar={() => setToastConquista(null)} />
     </div>
   );
 }
