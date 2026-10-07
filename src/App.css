@@ -25,7 +25,7 @@ body {
   border-radius: 16px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
   width: 100%;
-  max-width: 550px; 
+  max-width: 650px; /* Largura única, com folga para o painel de status */
   margin: 8vh auto; /* O "auto" nas laterais é a magia que centraliza a caixa */
   height: fit-content;
 }
@@ -40,6 +40,26 @@ body {
   border-radius: 12px;
   margin-bottom: 30px;
   border-left: 4px solid #10b981;
+  position: relative; /* Âncora para o botão de som */
+}
+
+.btn-som {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: transparent;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.2s, transform 0.2s;
+  padding: 4px;
+  line-height: 1;
+}
+
+.btn-som:hover {
+  opacity: 1;
+  transform: scale(1.15);
 }
 
 .level-badge {
@@ -88,7 +108,8 @@ body {
   height: 100%;
   background: linear-gradient(90deg, #10b981, #34d399);
   border-radius: 6px;
-  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Efeito "elástico" bacana ao ganhar XP */
+  transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
   box-shadow: 0 0 10px rgba(52, 211, 153, 0.5);
 }
 
@@ -156,7 +177,7 @@ body {
   border-color: transparent;
 }
 
-.item-tarefa.concluida span {
+.item-tarefa.concluida .texto-tarefa {
   text-decoration: line-through;
   color: #94a3b8;
 }
@@ -197,6 +218,46 @@ body {
 .btn-remover:hover {
   background-color: #ef4444;
   color: white;
+}
+
+/* --- Ações do item (editar + remover) e edição inline --- */
+.acoes-tarefa {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.btn-editar {
+  background-color: transparent;
+  border: 1px solid #475569;
+  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.btn-editar:hover {
+  border-color: #3b82f6;
+  background-color: rgba(59, 130, 246, 0.15);
+}
+
+.input-edicao {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #10b981;
+  background-color: #1e293b;
+  color: #fff;
+  font-size: 15px;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
 }
 
 .empty-state {
@@ -268,10 +329,6 @@ body {
   animation: levelUpGlow 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 
-/* Transição mais suave para a barra de XP */
-.xp-bar-fill {
-  transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); /* Efeito "elástico" bacana */
-}
 /* =========================================
    SISTEMA DE RARIDADE DAS QUESTS
    ========================================= */
@@ -305,6 +362,33 @@ body {
 .item-tarefa.epica {
   border-left: 4px solid #a855f7; /* Roxo */
   box-shadow: inset 2px 0 15px rgba(168, 85, 247, 0.1);
+}
+
+/* Etiqueta de raridade: a informação não depende só da cor da borda */
+.tag-dificuldade {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.tag-dificuldade.comum {
+  color: #94a3b8;
+  background-color: rgba(100, 116, 139, 0.15);
+}
+
+.tag-dificuldade.rara {
+  color: #60a5fa;
+  background-color: rgba(59, 130, 246, 0.15);
+}
+
+.tag-dificuldade.epica {
+  color: #c084fc;
+  background-color: rgba(168, 85, 247, 0.15);
 }
 
 /* Responsividade extra para o Select no mobile */
@@ -371,11 +455,6 @@ body {
    PAINEL DE ATRIBUTOS E ESTATÍSTICAS
    ========================================= */
 
-/* Expandindo o container para caber o painel com folga */
-.premium-layout {
-  max-width: 650px !important;
-}
-
 .status-panel {
   display: flex;
   justify-content: space-between;
@@ -419,6 +498,12 @@ body {
   text-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
 }
 
+.status-value.de-sequencia {
+  color: #fb923c; /* Laranja fogo para a sequência */
+  text-shadow: 0 0 10px rgba(251, 146, 60, 0.3);
+  font-size: 16px;
+}
+
 /* Ajuste fino para telas pequenas */
 @media (max-width: 500px) {
   .status-panel {
@@ -426,9 +511,31 @@ body {
     gap: 10px;
   }
   .status-card {
-    flex: calc(50% - 5px); /* Divide em colunas duplas no mobile */
+    flex: calc(50% - 5px); /* Grade 2x2 no mobile */
   }
-  .status-card:last-child {
-    flex: 100%; /* O último card ocupa a linha toda */
+}
+
+/* =========================================
+    ACESSIBILIDADE: foco visível no teclado
+    ========================================= */
+
+.btn-salvar:focus-visible,
+.btn-aba:focus-visible,
+.btn-remover:focus-visible,
+.select-dificuldade:focus-visible,
+.checkbox-tarefa:focus-visible {
+  outline: 2px solid #34d399;
+  outline-offset: 2px;
+}
+
+/* Respeita quem prefere menos movimento na tela */
+@media (prefers-reduced-motion: reduce) {
+  .level-up-anim {
+    animation: none;
+  }
+  .xp-bar-fill,
+  .item-tarefa,
+  .status-card {
+    transition: none;
   }
 }
