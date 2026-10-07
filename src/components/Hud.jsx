@@ -35,6 +35,7 @@ function Hud({ level, xp, animacaoLevel, somMudo, onAlternarSom }) {
           aria-valuenow={xp}
           aria-valuemin={0}
           aria-valuemax={xpNecessario}
+          aria-valuetext={`${xp} de ${xpNecessario} XP`}
           aria-label="Experiência"
         >
           <div className="xp-bar-fill" style={{ width: `${porcentagemXp}%` }}></div>

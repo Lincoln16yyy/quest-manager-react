@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import confetti from 'canvas-confetti';
+import { useState, useEffect, useCallback } from 'react';
+import confetti from './utils/confete';
 import Hud from './components/Hud';
 import PainelStatus from './components/PainelStatus';
 import FormQuest from './components/FormQuest';
@@ -16,6 +16,7 @@ import { calcularStreak, streakVisivel, chaveData } from './utils/datas';
 import { verificarNovasConquistas } from './utils/conquistas';
 import { montarBackup, validarBackup } from './utils/backup';
 import { gerarId } from './utils/id';
+import { contarConcluidas, contarEpicasConcluidas } from './utils/quests';
 import {
   inteiroNaoNegativo,
   nivelValido,
@@ -51,8 +52,11 @@ function App() {
   const [ultimoDia, setUltimoDia] = useLocalStorage(STORAGE_KEYS.ultimoDia, null, textoOuNull);
   const [somMudo, setSomMudo] = useLocalStorage(STORAGE_KEYS.somMudo, false, booleano);
   const [conquistas, setConquistas] = useLocalStorage(STORAGE_KEYS.conquistas, [], listaIds);
-  const [epicasConcluidas, setEpicasConcluidas] = useLocalStorage(STORAGE_KEYS.epicas, 0, inteiroNaoNegativo);
   const [toast, setToast] = useState(null); // { emoji, titulo, texto, duracao?, acao? } | null
+  const [anuncio, setAnuncio] = useState(''); // anúncios para leitores de tela (aria-live)
+
+  // useCallback: sem isso o useEffect do Toast reinicia o timer a cada render
+  const fecharToast = useCallback(() => setToast(null), []);
   const [maiorNivel, setMaiorNivel] = useLocalStorage(STORAGE_KEYS.maiorNivel, level, nivelValido);
   const [backupStreak, setBackupStreak] = useLocalStorage(STORAGE_KEYS.backupStreak, null, (v) =>
     v && typeof v === 'object' && Number.isInteger(v.streak)
@@ -105,6 +109,7 @@ function App() {
     if (novo.level > maiorNivel) {
       setMaiorNivel(novo.level);
       setAnimacaoLevel(true);
+      setAnuncio(`Você subiu para o nível ${novo.level}!`);
       setTimeout(() => setAnimacaoLevel(false), 1000);
       confetti({
         particleCount: 150,
@@ -138,6 +143,7 @@ function App() {
 
     // Comemora só quando a sequência realmente cresce (2+ dias seguidos)
     if (resultado.streak > 1) {
+      setAnuncio(`Sequência de ${resultado.streak} dias seguidos!`);
       confetti({
         particleCount: 40,
         spread: 40,
@@ -196,7 +202,6 @@ function App() {
     if (!item) return;
 
     const novoStatus = !item.concluida;
-    const ehEpica = (item.dificuldade || 'comum') === 'epica';
     const hoje = chaveData();
 
     // Nova lista calculada antes: a reversão da streak precisa saber
@@ -214,11 +219,6 @@ function App() {
     const novasConcluidas = novoStatus
       ? historicoConcluidas + 1
       : Math.max(0, historicoConcluidas - 1);
-    const novasEpicas = ehEpica
-      ? novoStatus
-        ? epicasConcluidas + 1
-        : Math.max(0, epicasConcluidas - 1)
-      : epicasConcluidas;
 
     let novaStreak = streak;
     if (novoStatus) {
@@ -237,15 +237,17 @@ function App() {
 
     // ...e persiste tudo
     setHistoricoConcluidas(novasConcluidas);
-    if (ehEpica) setEpicasConcluidas(novasEpicas);
 
-    // Conquistas são checadas com os valores futuros, sem efeito colateral em efeito
-    checarConquistas({
-      concluidas: novasConcluidas,
-      epicas: novasEpicas,
-      level: progresso.level,
-      streak: novaStreak,
-    });
+    // Conquistas só podem ser desbloqueadas ao CONCLUIR (desmarcar/apagar
+    // só reduz contagens) — e contam apenas quests que existem na lista
+    if (novoStatus) {
+      checarConquistas({
+        concluidas: contarConcluidas(novaLista),
+        epicas: contarEpicasConcluidas(novaLista),
+        level: progresso.level,
+        streak: novaStreak,
+      });
+    }
 
     if (novoStatus && item.dificuldade === 'epica') {
       confetti({
@@ -267,12 +269,12 @@ function App() {
       xp,
       concluidas: historicoConcluidas,
       criadas: totalCriadas,
-      epicas: epicasConcluidas,
       streak,
       ultimoDia,
       somMudo,
       conquistas,
       tema,
+      maiorNivel,
     });
 
     const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
@@ -310,12 +312,14 @@ function App() {
       setXp(estado.xp);
       setHistoricoConcluidas(estado.concluidas);
       setTotalCriadas(estado.criadas);
-      setEpicasConcluidas(estado.epicas);
       setStreak(estado.streak);
       setUltimoDia(estado.ultimoDia);
       setSomMudo(estado.somMudo);
       setConquistas(estado.conquistas);
       setTema(estado.tema);
+      // O recorde passa a ser o do backup; a reversão de streak antiga não vale mais
+      setMaiorNivel(estado.maiorNivel);
+      setBackupStreak(null);
 
       setToast({
         emoji: '📦',
@@ -336,12 +340,18 @@ function App() {
     totalCriadas > 0
       ? Math.min(100, Math.round((historicoConcluidas / totalCriadas) * 100))
       : 100;
-  const poderTotal = level * 15 + historicoConcluidas * 5;
   const sequenciaExibida = streakVisivel({ streak, ultimoDia });
 
-  // Exibição deriva dos stats (jogadores antigos veem suas conquistas na hora);
-  // o registro persistido serve para não repetir a celebração
-  const statsAtuais = { concluidas: historicoConcluidas, epicas: epicasConcluidas, level, streak };
+  // REGRA (issue #24): Poder e conquistas contam apenas quests concluídas
+  // que AINDA EXISTEM na lista — criar → concluir → apagar não gera farm.
+  // O histórico de carreira (card CONCLUÍDAS e TAXA DE VITÓRIA) é separado
+  // e nunca muda ao apagar (issue #7).
+  const concluidasNaLista = contarConcluidas(listaTarefas);
+  const epicasNaLista = contarEpicasConcluidas(listaTarefas);
+  const poderTotal = level * 15 + concluidasNaLista * 5;
+
+  // Exibição deriva dos stats vivos; o registro persistido evita repetir a celebração
+  const statsAtuais = { concluidas: concluidasNaLista, epicas: epicasNaLista, level, streak };
   const conquistasExibidas = CONQUISTAS.filter(
     (c) => conquistas.includes(c.id) || c.condicao(statsAtuais)
   ).map((c) => c.id);
@@ -354,6 +364,11 @@ function App() {
 
   return (
     <div className="container">
+      {/* Anúncios de level up e streak para leitores de tela */}
+      <div className="sr-only" aria-live="polite">
+        {anuncio}
+      </div>
+
       <Hud
         level={level}
         xp={xp}
@@ -397,7 +412,7 @@ function App() {
 
       <BarraBackup onExportar={exportarProgresso} onImportar={importarProgresso} />
 
-      <Toast toast={toast} onFechar={() => setToast(null)} />
+      <Toast toast={toast} onFechar={fecharToast} />
     </div>
   );
 }

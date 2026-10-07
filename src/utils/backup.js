@@ -41,21 +41,23 @@ export function validarBackup(dados) {
   const e = dados.estado;
   const idsConhecidos = CONQUISTAS.map((c) => c.id);
   const quests = sanitizarQuests(e.quests);
+  const level = nivelValido(e.level);
 
   return {
     ok: true,
     estado: {
       quests,
-      level: nivelValido(e.level),
+      level,
       xp: inteiroNaoNegativo(e.xp),
       concluidas: inteiroNaoNegativo(e.concluidas),
       criadas: inteiroNaoNegativo(e.criadas, quests.length),
-      epicas: inteiroNaoNegativo(e.epicas),
       streak: inteiroNaoNegativo(e.streak),
       ultimoDia: textoOuNull(e.ultimoDia),
       somMudo: booleano(e.somMudo),
       conquistas: listaIds(e.conquistas).filter((id) => idsConhecidos.includes(id)),
       tema: temaValido(e.tema) ? e.tema : 'padrao',
+      // Recorde de nível: backups antigos sem o campo assumem o nível atual
+      maiorNivel: Math.max(nivelValido(e.maiorNivel ?? e.level), level),
     },
   };
 }

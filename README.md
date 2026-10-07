@@ -12,6 +12,7 @@ Um gerenciador de tarefas gamificado: transforme as tarefas do seu dia a dia em 
 - **Backup do progresso** 📦 — exporte e importe tudo em um arquivo JSON
 - **Temas de cores** 🎨 — Taverna, Floresta, Masmorra e Deserto, com transição suave
 - **Histórico protegido** 🛡️ — apagar quests limpa a lista, mas nunca reduz suas estatísticas de carreira (apenas devolve o XP de quests concluídas)
+- **Anti-farm** ⚖️ — Poder e conquistas contam apenas quests concluídas que ainda existem na lista: concluir e apagar em loop não gera vantagem
 - **Títulos de rank** — de *Novato da Guilda* até *Mestre Supremo*, conforme seu nível
 - **Painel de atributos** — Poder total, quests concluídas, taxa de vitória e sequência
 - **Filtros** — visualize Todas, apenas Ativas ou Concluídas

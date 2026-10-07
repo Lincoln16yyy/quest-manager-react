@@ -1,14 +1,16 @@
 import { DIFICULDADES } from '../constants.js';
 import { gerarId } from './id.js';
+import { NIVEL_MAXIMO } from './xp.js';
 
 // Validadores/sanitizadores para dados vindos de fora (localStorage, backup).
 // Filosofia: corrigir o que dá, descartar o que não dá, nunca quebrar o app.
+// isSafeInteger (e não isInteger) rejeita absurdos como 1e300.
 
 export const inteiroNaoNegativo = (valor, padrao = 0) =>
-  Number.isInteger(valor) && valor >= 0 ? valor : padrao;
+  Number.isSafeInteger(valor) && valor >= 0 ? valor : padrao;
 
 export const nivelValido = (valor) =>
-  Number.isInteger(valor) && valor >= 1 ? valor : 1;
+  Number.isSafeInteger(valor) && valor >= 1 ? Math.min(valor, NIVEL_MAXIMO) : 1;
 
 export const booleano = (valor, padrao = false) =>
   typeof valor === 'boolean' ? valor : padrao;
