@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
 import Hud from './components/Hud';
 import PainelStatus from './components/PainelStatus';
@@ -8,8 +8,9 @@ import Tarefa from './components/Tarefa';
 import PainelConquistas from './components/PainelConquistas';
 import Toast from './components/Toast';
 import BarraBackup from './components/BarraBackup';
+import SeletorTema from './components/SeletorTema';
 import useLocalStorage from './hooks/useLocalStorage';
-import { STORAGE_KEYS, DIFICULDADES, CONQUISTAS } from './constants';
+import { STORAGE_KEYS, DIFICULDADES, CONQUISTAS, temaValido } from './constants';
 import { aplicarXp } from './utils/xp';
 import { calcularStreak, streakVisivel, chaveData } from './utils/datas';
 import { verificarNovasConquistas } from './utils/conquistas';
@@ -45,6 +46,15 @@ function App() {
   const [conquistas, setConquistas] = useLocalStorage(STORAGE_KEYS.conquistas, []);
   const [epicasConcluidas, setEpicasConcluidas] = useLocalStorage(STORAGE_KEYS.epicas, 0);
   const [toast, setToast] = useState(null); // { emoji, titulo, texto } | null
+
+  // Tema: valor inválido salvo no navegador cai no padrão
+  const [temaBruto, setTema] = useLocalStorage(STORAGE_KEYS.tema, 'padrao');
+  const tema = temaValido(temaBruto) ? temaBruto : 'padrao';
+
+  // Sincroniza o <html data-tema="..."> — é isso que troca as variáveis CSS
+  useEffect(() => {
+    document.documentElement.dataset.tema = tema;
+  }, [tema]);
 
   /**
    * Desbloqueia conquistas com base nos PRÓXIMOS stats (já calculados
@@ -199,6 +209,7 @@ function App() {
       ultimoDia,
       somMudo,
       conquistas,
+      tema,
     });
 
     const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
@@ -241,6 +252,7 @@ function App() {
       setUltimoDia(estado.ultimoDia);
       setSomMudo(estado.somMudo);
       setConquistas(estado.conquistas);
+      setTema(estado.tema);
 
       setToast({
         emoji: '📦',
@@ -314,6 +326,8 @@ function App() {
       </ul>
 
       <PainelConquistas desbloqueadas={conquistasExibidas} />
+
+      <SeletorTema tema={tema} onMudarTema={setTema} />
 
       <BarraBackup onExportar={exportarProgresso} onImportar={importarProgresso} />
 

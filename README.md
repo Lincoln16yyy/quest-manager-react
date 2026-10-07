@@ -10,6 +10,7 @@ Um gerenciador de tarefas gamificado: transforme as tarefas do seu dia a dia em 
 - **Sequência diária (streak)** 🔥 — complete ao menos uma quest por dia para manter o fogo aceso
 - **Conquistas** 🏅 — 7 badges desbloqueáveis com notificação e confete dourado
 - **Backup do progresso** 📦 — exporte e importe tudo em um arquivo JSON
+- **Temas de cores** 🎨 — Taverna, Floresta, Masmorra e Deserto, com transição suave
 - **Títulos de rank** — de *Novato da Guilda* até *Mestre Supremo*, conforme seu nível
 - **Painel de atributos** — Poder total, quests concluídas, taxa de vitória e sequência
 - **Filtros** — visualize Todas, apenas Ativas ou Concluídas
@@ -57,7 +58,8 @@ src/
 │   ├── Tarefa.jsx     #   Item da lista de quests
 │   ├── PainelConquistas.jsx # Grade de conquistas
 │   ├── Toast.jsx        #   Notificação flutuante genérica
-│   └── BarraBackup.jsx  #   Exportar/importar progresso
+│   ├── BarraBackup.jsx  #   Exportar/importar progresso
+│   └── SeletorTema.jsx  #   Troca de tema de cores
 ├── hooks/
 │   └── useLocalStorage.js  # Estado sincronizado com localStorage
 ├── utils/
@@ -78,7 +80,7 @@ src/
 - [x] Efeitos sonoros de level up
 - [x] Conquistas/badges desbloqueáveis
 - [x] Exportar e importar o progresso
-- [ ] Temas de cores (floresta, masmorra, deserto...) ([#3](https://github.com/Lincoln16yyy/quest-manager-react/issues/3))
+- [x] Temas de cores (floresta, masmorra, deserto...)
 
 ---
 

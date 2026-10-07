@@ -1,13 +1,91 @@
+/* =========================================
+    TEMAS DE CORES
+    O seletor troca o atributo data-tema no <html>;
+    cada tema redefine as variáveis abaixo.
+    Cores de raridade (comum/rara/épica), perigo e
+    fogo da sequência são semânticas: não mudam.
+    ========================================= */
+
+:root, /* Tema padrão: Taverna 🕯️ */
+[data-tema='padrao'] {
+  --fundo-pagina: #0f172a;
+  --fundo-card: #1e293b;
+  --fundo-elemento: #0f172a;
+  --borda: #334155;
+  --borda-hover: #475569;
+  --texto: #f8fafc;
+  --texto-suave: #94a3b8;
+  --texto-apagado: #64748b;
+  --primaria: #10b981;
+  --primaria-clara: #34d399;
+  --secundaria: #3b82f6;
+  --secundaria-hover: #2563eb;
+  --destaque: #fbbf24;
+}
+
+/* Floresta 🌲 */
+[data-tema='floresta'] {
+  --fundo-pagina: #0b1f14;
+  --fundo-card: #14301f;
+  --fundo-elemento: #0b1f14;
+  --borda: #2d4a38;
+  --borda-hover: #41614d;
+  --texto: #f0fdf4;
+  --texto-suave: #a7c4b0;
+  --texto-apagado: #6b8f77;
+  --primaria: #4ade80;
+  --primaria-clara: #86efac;
+  --secundaria: #0d9488;
+  --secundaria-hover: #0f766e;
+  --destaque: #facc15;
+}
+
+/* Masmorra 🏰 */
+[data-tema='masmorra'] {
+  --fundo-pagina: #140f1f;
+  --fundo-card: #201735;
+  --fundo-elemento: #140f1f;
+  --borda: #3d3157;
+  --borda-hover: #524373;
+  --texto: #faf5ff;
+  --texto-suave: #b8a9d9;
+  --texto-apagado: #7e6fa3;
+  --primaria: #a78bfa;
+  --primaria-clara: #c4b5fd;
+  --secundaria: #8b5cf6;
+  --secundaria-hover: #7c3aed;
+  --destaque: #fbbf24;
+}
+
+/* Deserto 🏜️ */
+[data-tema='deserto'] {
+  --fundo-pagina: #1c130b;
+  --fundo-card: #2a1e11;
+  --fundo-elemento: #1c130b;
+  --borda: #4a3722;
+  --borda-hover: #63492c;
+  --texto: #fdf6ec;
+  --texto-suave: #d4b896;
+  --texto-apagado: #96795a;
+  --primaria: #f59e0b;
+  --primaria-clara: #fbbf24;
+  --secundaria: #ea580c;
+  --secundaria-hover: #c2410c;
+  --destaque: #fde68a;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  /* Transição suave ao trocar de tema (classes com transição própria vencem) */
+  transition: background-color 0.35s ease, border-color 0.35s ease;
 }
 
 body {
-  background-color: #0f172a;
-  color: #f8fafc;
+  background-color: var(--fundo-pagina);
+  color: var(--texto);
   min-height: 100vh;
 }
 
@@ -20,7 +98,7 @@ body {
 }
 
 .container {
-  background-color: #1e293b;
+  background-color: var(--fundo-card);
   padding: 30px;
   border-radius: 16px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
@@ -35,11 +113,11 @@ body {
   display: flex;
   align-items: center;
   gap: 20px;
-  background: #0f172a;
+  background: var(--fundo-elemento);
   padding: 20px;
   border-radius: 12px;
   margin-bottom: 30px;
-  border-left: 4px solid #10b981;
+  border-left: 4px solid var(--primaria);
   position: relative; /* Âncora para o botão de som */
 }
 
@@ -67,13 +145,13 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: #10b981;
-  color: #0f172a;
+  background: var(--primaria);
+  color: var(--fundo-pagina);
   width: 60px;
   height: 60px;
   border-radius: 12px;
   font-weight: 900;
-  box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+  box-shadow: 0 0 15px color-mix(in srgb, var(--primaria) 40%, transparent);
   flex-shrink: 0;
 }
 
@@ -91,7 +169,7 @@ body {
   margin-bottom: 8px;
   font-size: 14px;
   font-weight: bold;
-  color: #94a3b8;
+  color: var(--texto-suave);
   text-transform: uppercase;
   letter-spacing: 1px;
 }
@@ -99,18 +177,18 @@ body {
 .xp-bar-bg {
   width: 100%;
   height: 12px;
-  background-color: #334155;
+  background-color: var(--borda);
   border-radius: 6px;
   overflow: hidden;
 }
 
 .xp-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #10b981, #34d399);
+  background: linear-gradient(90deg, var(--primaria), var(--primaria-clara));
   border-radius: 6px;
   /* Efeito "elástico" bacana ao ganhar XP */
   transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-  box-shadow: 0 0 10px rgba(52, 211, 153, 0.5);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--primaria-clara) 50%, transparent);
 }
 
 /* --- INPUT E BOTÕES --- */
@@ -124,9 +202,9 @@ body {
   flex: 1;
   padding: 14px 16px;
   border-radius: 8px;
-  border: 1px solid #334155;
-  background-color: #0f172a;
-  color: #fff;
+  border: 1px solid var(--borda);
+  background-color: var(--fundo-elemento);
+  color: var(--texto);
   font-size: 16px;
   outline: none;
   transition: all 0.3s;
@@ -134,13 +212,13 @@ body {
 }
 
 .input-tarefa:focus {
-  border-color: #10b981;
-  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+  border-color: var(--primaria);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primaria) 20%, transparent);
 }
 
 .btn-salvar {
   padding: 0 24px;
-  background-color: #3b82f6;
+  background-color: var(--secundaria);
   color: white;
   border: none;
   border-radius: 8px;
@@ -150,7 +228,7 @@ body {
   transition: background-color 0.2s, transform 0.1s;
 }
 
-.btn-salvar:hover { background-color: #2563eb; }
+.btn-salvar:hover { background-color: var(--secundaria-hover); }
 .btn-salvar:active { transform: scale(0.96); }
 
 /* --- LISTA DE TAREFAS --- */
@@ -161,25 +239,25 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 16px;
-  background-color: #0f172a;
+  background-color: var(--fundo-elemento);
   margin-bottom: 12px;
   border-radius: 10px;
-  border: 1px solid #334155;
+  border: 1px solid var(--borda);
   transition: all 0.3s ease;
   gap: 10px;
 }
 
-.item-tarefa:hover { border-color: #475569; }
+.item-tarefa:hover { border-color: var(--borda-hover); }
 
 .item-tarefa.concluida {
   opacity: 0.6;
-  background-color: #1e293b;
+  background-color: var(--fundo-card);
   border-color: transparent;
 }
 
 .item-tarefa.concluida .texto-tarefa {
   text-decoration: line-through;
-  color: #94a3b8;
+  color: var(--texto-suave);
 }
 
 .conteudo-tarefa {
@@ -195,7 +273,7 @@ body {
   width: 20px;
   height: 20px;
   cursor: pointer;
-  accent-color: #10b981;
+  accent-color: var(--primaria);
   flex-shrink: 0;
 }
 
@@ -229,7 +307,7 @@ body {
 
 .btn-editar {
   background-color: transparent;
-  border: 1px solid #475569;
+  border: 1px solid var(--borda-hover);
   border-radius: 6px;
   width: 32px;
   height: 32px;
@@ -243,8 +321,8 @@ body {
 }
 
 .btn-editar:hover {
-  border-color: #3b82f6;
-  background-color: rgba(59, 130, 246, 0.15);
+  border-color: var(--secundaria);
+  background-color: color-mix(in srgb, var(--secundaria) 15%, transparent);
 }
 
 .input-edicao {
@@ -252,24 +330,24 @@ body {
   min-width: 0;
   padding: 6px 10px;
   border-radius: 6px;
-  border: 1px solid #10b981;
-  background-color: #1e293b;
-  color: #fff;
+  border: 1px solid var(--primaria);
+  background-color: var(--fundo-card);
+  color: var(--texto);
   font-size: 15px;
   outline: none;
-  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primaria) 20%, transparent);
 }
 
 .empty-state {
   text-align: center;
-  color: #64748b;
+  color: var(--texto-apagado);
   padding: 20px;
   font-style: italic;
 }
 
 /* =========================================
-   RESPONSIVIDADE (Telas menores que 500px)
-   ========================================= */
+    RESPONSIVIDADE (Telas menores que 500px)
+    ========================================= */
 @media (max-width: 500px) {
   .container {
     padding: 20px;
@@ -304,24 +382,24 @@ body {
 }
 
 /* =========================================
-   EFEITOS ESPECIAIS E ANIMAÇÕES
-   ========================================= */
+    EFEITOS ESPECIAIS E ANIMAÇÕES
+    ========================================= */
 
 /* Animação de Level Up */
 @keyframes levelUpGlow {
-  0% { 
-    box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); 
-    transform: scale(1); 
+  0% {
+    box-shadow: 0 0 15px color-mix(in srgb, var(--primaria) 40%, transparent);
+    transform: scale(1);
   }
-  50% { 
-    box-shadow: 0 0 40px rgba(52, 211, 153, 1), 0 0 80px rgba(52, 211, 153, 0.8); 
-    transform: scale(1.15) rotate(3deg); 
-    background-color: #34d399;
+  50% {
+    box-shadow: 0 0 40px var(--primaria-clara), 0 0 80px color-mix(in srgb, var(--primaria-clara) 80%, transparent);
+    transform: scale(1.15) rotate(3deg);
+    background-color: var(--primaria-clara);
     color: #fff;
   }
-  100% { 
-    box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); 
-    transform: scale(1); 
+  100% {
+    box-shadow: 0 0 15px color-mix(in srgb, var(--primaria) 40%, transparent);
+    transform: scale(1);
   }
 }
 
@@ -330,15 +408,15 @@ body {
 }
 
 /* =========================================
-   SISTEMA DE RARIDADE DAS QUESTS
-   ========================================= */
+    SISTEMA DE RARIDADE DAS QUESTS
+    ========================================= */
 
 .select-dificuldade {
   padding: 14px;
   border-radius: 8px;
-  border: 1px solid #334155;
-  background-color: #1e293b;
-  color: #f8fafc;
+  border: 1px solid var(--borda);
+  background-color: var(--fundo-card);
+  color: var(--texto);
   font-size: 14px;
   font-weight: bold;
   outline: none;
@@ -347,10 +425,10 @@ body {
 }
 
 .select-dificuldade:focus {
-  border-color: #10b981;
+  border-color: var(--primaria);
 }
 
-/* Bordas coloridas para as tarefas */
+/* Bordas coloridas para as tarefas (semânticas: iguais em todos os temas) */
 .item-tarefa.comum {
   border-left: 4px solid #64748b; /* Cinza */
 }
@@ -400,39 +478,39 @@ body {
 }
 
 /* =========================================
-   SISTEMA DE TÍTULOS / RANKS
-   ========================================= */
+    SISTEMA DE TÍTULOS / RANKS
+    ========================================= */
 
 .titulo-rpg {
-  color: #fbbf24; /* Amarelo dourado */
-  text-shadow: 0 0 8px rgba(251, 191, 36, 0.4);
-  background-color: rgba(251, 191, 36, 0.1);
+  color: var(--destaque);
+  text-shadow: 0 0 8px color-mix(in srgb, var(--destaque) 40%, transparent);
+  background-color: color-mix(in srgb, var(--destaque) 10%, transparent);
   padding: 4px 10px;
   border-radius: 6px;
-  border: 1px solid rgba(251, 191, 36, 0.3);
+  border: 1px solid color-mix(in srgb, var(--destaque) 30%, transparent);
   font-size: 13px;
   letter-spacing: 1.5px;
 }
 
 /* =========================================
-   SISTEMA DE ABAS (FILTROS)
-   ========================================= */
+    SISTEMA DE ABAS (FILTROS)
+    ========================================= */
 
 .abas-container {
   display: flex;
   gap: 10px;
   margin-bottom: 20px;
-  background-color: #0f172a;
+  background-color: var(--fundo-elemento);
   padding: 8px;
   border-radius: 10px;
-  border: 1px solid #334155;
+  border: 1px solid var(--borda);
 }
 
 .btn-aba {
   flex: 1;
   padding: 10px 0;
   background: transparent;
-  color: #94a3b8;
+  color: var(--texto-suave);
   border: none;
   border-radius: 6px;
   font-weight: bold;
@@ -442,18 +520,19 @@ body {
 }
 
 .btn-aba:hover {
-  color: #f8fafc;
-  background-color: #1e293b;
+  color: var(--texto);
+  background-color: var(--fundo-card);
 }
 
 .btn-aba.ativo {
-  background-color: #3b82f6; /* Azul destaque */
+  background-color: var(--secundaria);
   color: #ffffff;
-  box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--secundaria) 40%, transparent);
 }
+
 /* =========================================
-   PAINEL DE ATRIBUTOS E ESTATÍSTICAS
-   ========================================= */
+    PAINEL DE ATRIBUTOS E ESTATÍSTICAS
+    ========================================= */
 
 .status-panel {
   display: flex;
@@ -464,8 +543,8 @@ body {
 
 .status-card {
   flex: 1;
-  background-color: #0f172a;
-  border: 1px solid #334155;
+  background-color: var(--fundo-elemento);
+  border: 1px solid var(--borda);
   border-radius: 10px;
   padding: 12px;
   text-align: center;
@@ -476,26 +555,27 @@ body {
 }
 
 .status-card:hover {
-  border-color: #3b82f6;
+  border-color: var(--secundaria);
   transform: translateY(-2px);
 }
 
 .status-label {
   font-size: 11px;
   font-weight: 800;
-  color: #64748b;
+  color: var(--texto-apagado);
   letter-spacing: 1px;
 }
 
 .status-value {
   font-size: 20px;
   font-weight: 900;
-  color: #f8fafc;
+  color: var(--texto);
 }
 
 .status-value.de-poder {
-  color: #3b82f6; /* Azul neon para o poder */
-  text-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+  /* Clareia a cor secundária para leitura em fundo escuro, em qualquer tema */
+  color: color-mix(in srgb, var(--secundaria) 55%, white);
+  text-shadow: 0 0 10px color-mix(in srgb, var(--secundaria) 30%, transparent);
 }
 
 .status-value.de-sequencia {
@@ -522,9 +602,12 @@ body {
 .btn-salvar:focus-visible,
 .btn-aba:focus-visible,
 .btn-remover:focus-visible,
+.btn-editar:focus-visible,
+.btn-backup:focus-visible,
+.btn-tema:focus-visible,
 .select-dificuldade:focus-visible,
 .checkbox-tarefa:focus-visible {
-  outline: 2px solid #34d399;
+  outline: 2px solid var(--primaria-clara);
   outline-offset: 2px;
 }
 
@@ -562,9 +645,9 @@ body {
 .contador-conquistas {
   font-size: 13px;
   font-weight: bold;
-  color: #94a3b8;
-  background-color: #0f172a;
-  border: 1px solid #334155;
+  color: var(--texto-suave);
+  background-color: var(--fundo-elemento);
+  border: 1px solid var(--borda);
   padding: 2px 10px;
   border-radius: 999px;
 }
@@ -577,8 +660,8 @@ body {
 }
 
 .card-conquista {
-  background-color: #0f172a;
-  border: 1px solid #334155;
+  background-color: var(--fundo-elemento);
+  border: 1px solid var(--borda);
   border-radius: 10px;
   padding: 14px 10px;
   display: flex;
@@ -595,7 +678,7 @@ body {
 
 .card-conquista small {
   font-size: 11px;
-  color: #94a3b8;
+  color: var(--texto-suave);
   line-height: 1.35;
 }
 
@@ -613,13 +696,13 @@ body {
 }
 
 .card-conquista.desbloqueada {
-  border-color: #fbbf24;
-  box-shadow: 0 0 12px rgba(251, 191, 36, 0.15);
+  border-color: var(--destaque);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--destaque) 15%, transparent);
 }
 
 .card-conquista.desbloqueada:hover {
   transform: translateY(-2px);
-  box-shadow: 0 0 18px rgba(251, 191, 36, 0.3);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--destaque) 30%, transparent);
 }
 
 /* --- Toast de notificação (conquistas, backup...) --- */
@@ -630,11 +713,11 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
-  background-color: #1e293b;
-  border: 1px solid #fbbf24;
+  background-color: var(--fundo-card);
+  border: 1px solid var(--destaque);
   border-radius: 12px;
   padding: 14px 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 20px rgba(251, 191, 36, 0.25);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 20px color-mix(in srgb, var(--destaque) 25%, transparent);
   z-index: 50;
   max-width: 340px;
   animation: toastEntra 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -658,20 +741,20 @@ body {
 }
 
 .texto-toast strong {
-  color: #fbbf24;
+  color: var(--destaque);
   font-size: 14px;
 }
 
 .texto-toast p {
   font-size: 13px;
-  color: #cbd5e1;
+  color: var(--texto-suave);
   margin-top: 2px;
 }
 
 .toast-notificacao > button {
   background: transparent;
   border: none;
-  color: #94a3b8;
+  color: var(--texto-suave);
   font-size: 14px;
   cursor: pointer;
   align-self: flex-start;
@@ -681,7 +764,7 @@ body {
 }
 
 .toast-notificacao > button:hover {
-  color: #f8fafc;
+  color: var(--texto);
 }
 
 @media (max-width: 500px) {
@@ -694,13 +777,54 @@ body {
 }
 
 /* =========================================
+    SELETOR DE TEMA
+    ========================================= */
+
+.seletor-tema {
+  margin-top: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.rotulo-tema {
+  color: var(--texto-suave);
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.btn-tema {
+  background-color: transparent;
+  border: 1px solid var(--borda);
+  color: var(--texto-suave);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-tema:hover {
+  border-color: var(--borda-hover);
+  color: var(--texto);
+}
+
+.btn-tema.ativo {
+  border-color: var(--primaria);
+  color: var(--texto);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--primaria) 35%, transparent);
+}
+
+/* =========================================
     BARRA DE BACKUP (exportar/importar)
     ========================================= */
 
 .barra-backup {
   margin-top: 30px;
   padding-top: 20px;
-  border-top: 1px solid #334155;
+  border-top: 1px solid var(--borda);
   display: flex;
   gap: 10px;
   justify-content: center;
@@ -709,8 +833,8 @@ body {
 
 .btn-backup {
   background-color: transparent;
-  border: 1px solid #334155;
-  color: #94a3b8;
+  border: 1px solid var(--borda);
+  color: var(--texto-suave);
   border-radius: 8px;
   padding: 8px 14px;
   font-size: 13px;
@@ -719,6 +843,6 @@ body {
 }
 
 .btn-backup:hover {
-  border-color: #64748b;
-  color: #f8fafc;
+  border-color: var(--borda-hover);
+  color: var(--texto);
 }

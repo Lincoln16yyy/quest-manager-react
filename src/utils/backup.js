@@ -1,4 +1,4 @@
-import { DIFICULDADES, CONQUISTAS } from '../constants.js';
+import { DIFICULDADES, CONQUISTAS, temaValido } from '../constants.js';
 
 // Backup do progresso: funções puras, sem DOM — fáceis de testar.
 
@@ -62,6 +62,7 @@ export function validarBackup(dados) {
       conquistas: Array.isArray(e.conquistas)
         ? e.conquistas.filter((id) => idsConhecidos.includes(id))
         : [],
+      tema: temaValido(e.tema) ? e.tema : 'padrao',
     },
   };
 }

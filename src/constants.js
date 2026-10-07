@@ -11,7 +11,18 @@ export const STORAGE_KEYS = {
   somMudo: 'som-mudo-lincoln',
   conquistas: 'conquistas-lincoln',
   epicas: 'stats-epicas-lincoln',
+  tema: 'tema-lincoln',
 };
+
+// O primeiro é o padrão; os estilos ficam em App.css ([data-tema='...'])
+export const TEMAS = [
+  { id: 'padrao', emoji: '🕯️', nome: 'Taverna' },
+  { id: 'floresta', emoji: '🌲', nome: 'Floresta' },
+  { id: 'masmorra', emoji: '🏰', nome: 'Masmorra' },
+  { id: 'deserto', emoji: '🏜️', nome: 'Deserto' },
+];
+
+export const temaValido = (tema) => TEMAS.some((t) => t.id === tema);
 
 export const DIFICULDADES = {
   comum: { rotulo: 'Comum', xp: 10 },
