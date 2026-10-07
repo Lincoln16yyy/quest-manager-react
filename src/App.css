@@ -538,7 +538,7 @@ body {
   .status-card {
     transition: none;
   }
-  .toast-conquista {
+  .toast-notificacao {
     animation: none;
   }
 }
@@ -622,8 +622,8 @@ body {
   box-shadow: 0 0 18px rgba(251, 191, 36, 0.3);
 }
 
-/* --- Toast de conquista desbloqueada --- */
-.toast-conquista {
+/* --- Toast de notificação (conquistas, backup...) --- */
+.toast-notificacao {
   position: fixed;
   bottom: 24px;
   right: 24px;
@@ -668,7 +668,7 @@ body {
   margin-top: 2px;
 }
 
-.toast-conquista > button {
+.toast-notificacao > button {
   background: transparent;
   border: none;
   color: #94a3b8;
@@ -680,15 +680,45 @@ body {
   transition: color 0.2s;
 }
 
-.toast-conquista > button:hover {
+.toast-notificacao > button:hover {
   color: #f8fafc;
 }
 
 @media (max-width: 500px) {
-  .toast-conquista {
+  .toast-notificacao {
     right: 12px;
     left: 12px;
     bottom: 12px;
     max-width: none;
   }
+}
+
+/* =========================================
+    BARRA DE BACKUP (exportar/importar)
+    ========================================= */
+
+.barra-backup {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #334155;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btn-backup {
+  background-color: transparent;
+  border: 1px solid #334155;
+  color: #94a3b8;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-backup:hover {
+  border-color: #64748b;
+  color: #f8fafc;
 }

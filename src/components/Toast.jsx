@@ -2,26 +2,25 @@ import { useEffect } from 'react';
 
 const DURACAO_TOAST = 4000;
 
-function ToastConquista({ conquista, onFechar }) {
+/** Notificação flutuante genérica: { emoji, titulo, texto }. */
+function Toast({ toast, onFechar }) {
   // Fecha sozinho depois de alguns segundos
   useEffect(() => {
-    if (!conquista) return;
+    if (!toast) return;
     const timer = setTimeout(onFechar, DURACAO_TOAST);
     return () => clearTimeout(timer);
-  }, [conquista, onFechar]);
+  }, [toast, onFechar]);
 
-  if (!conquista) return null;
+  if (!toast) return null;
 
   return (
-    <div className="toast-conquista" role="status">
+    <div className="toast-notificacao" role="status">
       <span className="emoji-toast" aria-hidden="true">
-        {conquista.emoji}
+        {toast.emoji}
       </span>
       <div className="texto-toast">
-        <strong>Conquista desbloqueada!</strong>
-        <p>
-          {conquista.nome} — {conquista.descricao}
-        </p>
+        <strong>{toast.titulo}</strong>
+        <p>{toast.texto}</p>
       </div>
       <button type="button" onClick={onFechar} aria-label="Fechar notificação">
         ✕
@@ -30,4 +29,4 @@ function ToastConquista({ conquista, onFechar }) {
   );
 }
 
-export default ToastConquista;
+export default Toast;

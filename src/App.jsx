@@ -6,12 +6,14 @@ import FormQuest from './components/FormQuest';
 import AbasFiltro from './components/AbasFiltro';
 import Tarefa from './components/Tarefa';
 import PainelConquistas from './components/PainelConquistas';
-import ToastConquista from './components/ToastConquista';
+import Toast from './components/Toast';
+import BarraBackup from './components/BarraBackup';
 import useLocalStorage from './hooks/useLocalStorage';
 import { STORAGE_KEYS, DIFICULDADES, CONQUISTAS } from './constants';
 import { aplicarXp } from './utils/xp';
-import { calcularStreak, streakVisivel } from './utils/datas';
+import { calcularStreak, streakVisivel, chaveData } from './utils/datas';
 import { verificarNovasConquistas } from './utils/conquistas';
+import { montarBackup, validarBackup } from './utils/backup';
 import { tocarLevelUp } from './utils/sons';
 import './App.css';
 
@@ -42,7 +44,7 @@ function App() {
   const [somMudo, setSomMudo] = useLocalStorage(STORAGE_KEYS.somMudo, false);
   const [conquistas, setConquistas] = useLocalStorage(STORAGE_KEYS.conquistas, []);
   const [epicasConcluidas, setEpicasConcluidas] = useLocalStorage(STORAGE_KEYS.epicas, 0);
-  const [toastConquista, setToastConquista] = useState(null);
+  const [toast, setToast] = useState(null); // { emoji, titulo, texto } | null
 
   /**
    * Desbloqueia conquistas com base nos PRÓXIMOS stats (já calculados
@@ -53,7 +55,12 @@ function App() {
     if (novas.length === 0) return;
 
     setConquistas((atual) => [...atual, ...novas.map((c) => c.id)]);
-    setToastConquista(novas[novas.length - 1]); // mostra a mais recente
+    const maisRecente = novas[novas.length - 1]; // mostra a mais recente
+    setToast({
+      emoji: maisRecente.emoji,
+      titulo: 'Conquista desbloqueada!',
+      texto: `${maisRecente.nome} — ${maisRecente.descricao}`,
+    });
     confetti({
       particleCount: 80,
       spread: 60,
@@ -179,6 +186,76 @@ function App() {
     );
   };
 
+  /** Baixa um arquivo .json com todo o progresso. */
+  const exportarProgresso = () => {
+    const backup = montarBackup({
+      quests: listaTarefas,
+      level,
+      xp,
+      concluidas: historicoConcluidas,
+      criadas: totalCriadas,
+      epicas: epicasConcluidas,
+      streak,
+      ultimoDia,
+      somMudo,
+      conquistas,
+    });
+
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `quest-manager-backup-${chaveData()}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+
+    setToast({
+      emoji: '📦',
+      titulo: 'Backup exportado!',
+      texto: 'Guarde o arquivo em um lugar seguro.',
+    });
+  };
+
+  /** Lê um backup .json, valida e restaura o progresso. */
+  const importarProgresso = async (arquivo) => {
+    try {
+      const dados = JSON.parse(await arquivo.text());
+      const resultado = validarBackup(dados);
+
+      if (!resultado.ok) {
+        setToast({ emoji: '❌', titulo: 'Falha na importação', texto: resultado.erro });
+        return;
+      }
+
+      // Importar sobrescreve tudo: melhor confirmar antes
+      if (!window.confirm('Importar substituirá TODO o seu progresso atual. Continuar?')) return;
+
+      const { estado } = resultado;
+      setListaTarefas(estado.quests);
+      setLevel(estado.level);
+      setXp(estado.xp);
+      setHistoricoConcluidas(estado.concluidas);
+      setTotalCriadas(estado.criadas);
+      setEpicasConcluidas(estado.epicas);
+      setStreak(estado.streak);
+      setUltimoDia(estado.ultimoDia);
+      setSomMudo(estado.somMudo);
+      setConquistas(estado.conquistas);
+
+      setToast({
+        emoji: '📦',
+        titulo: 'Progresso importado!',
+        texto: 'Seu backup foi restaurado com sucesso.',
+      });
+    } catch {
+      setToast({
+        emoji: '❌',
+        titulo: 'Falha na importação',
+        texto: 'Não foi possível ler o arquivo. Ele é um JSON válido?',
+      });
+    }
+  };
+
   // Estatísticas: usam o histórico total, então não mudam ao apagar quests da lista
   const taxaSucesso =
     totalCriadas > 0
@@ -238,7 +315,9 @@ function App() {
 
       <PainelConquistas desbloqueadas={conquistasExibidas} />
 
-      <ToastConquista conquista={toastConquista} onFechar={() => setToastConquista(null)} />
+      <BarraBackup onExportar={exportarProgresso} onImportar={importarProgresso} />
+
+      <Toast toast={toast} onFechar={() => setToast(null)} />
     </div>
   );
 }

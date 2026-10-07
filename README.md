@@ -9,6 +9,7 @@ Um gerenciador de tarefas gamificado: transforme as tarefas do seu dia a dia em 
 - **Edição inline** — duplo clique (ou o botão ✏️) para renomear uma quest; Enter salva, Esc cancela
 - **Sequência diária (streak)** 🔥 — complete ao menos uma quest por dia para manter o fogo aceso
 - **Conquistas** 🏅 — 7 badges desbloqueáveis com notificação e confete dourado
+- **Backup do progresso** 📦 — exporte e importe tudo em um arquivo JSON
 - **Títulos de rank** — de *Novato da Guilda* até *Mestre Supremo*, conforme seu nível
 - **Painel de atributos** — Poder total, quests concluídas, taxa de vitória e sequência
 - **Filtros** — visualize Todas, apenas Ativas ou Concluídas
@@ -55,13 +56,15 @@ src/
 │   ├── AbasFiltro.jsx #   Abas de filtro
 │   ├── Tarefa.jsx     #   Item da lista de quests
 │   ├── PainelConquistas.jsx # Grade de conquistas
-│   └── ToastConquista.jsx   # Notificação de conquista
+│   ├── Toast.jsx        #   Notificação flutuante genérica
+│   └── BarraBackup.jsx  #   Exportar/importar progresso
 ├── hooks/
 │   └── useLocalStorage.js  # Estado sincronizado com localStorage
 ├── utils/
 │   ├── xp.js          # Regras de progressão (level up/down)
 │   ├── datas.js       # Sequência diária (streak)
 │   ├── conquistas.js  # Verificação de conquistas
+│   ├── backup.js      # Montagem e validação de backups
 │   └── sons.js        # Efeitos sonoros (Web Audio API)
 ├── constants.js       # Raridades, títulos, conquistas e chaves
 ├── App.jsx            # Composição e regras do jogo
@@ -74,7 +77,7 @@ src/
 - [x] Streak (sequência de dias completando quests)
 - [x] Efeitos sonoros de level up
 - [x] Conquistas/badges desbloqueáveis
-- [ ] Exportar e importar o progresso ([#2](https://github.com/Lincoln16yyy/quest-manager-react/issues/2))
+- [x] Exportar e importar o progresso
 - [ ] Temas de cores (floresta, masmorra, deserto...) ([#3](https://github.com/Lincoln16yyy/quest-manager-react/issues/3))
 
 ---
