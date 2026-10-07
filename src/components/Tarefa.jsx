@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { DIFICULDADES } from '../constants';
 
-function Tarefa({ item, onAlternar, onRemover, onEditar }) {
+function Tarefa({ item, onAlternar, onRemover, onEditar, onEditarDificuldade }) {
   // Se for uma tarefa antiga que não tinha dificuldade, assume "comum"
   const classeDificuldade = item.dificuldade || 'comum';
   const { rotulo, xp } = DIFICULDADES[classeDificuldade];
@@ -23,17 +23,35 @@ function Tarefa({ item, onAlternar, onRemover, onEditar }) {
   };
 
   // Idempotente: pode ser chamada pelo Enter e pelo blur sem efeito duplo
-  const salvarEdicao = () => {
-    if (cancelouRef.current) return; // cancelada via Esc
+  const salvarTexto = () => {
     const texto = textoEditado.trim();
     if (texto !== '' && texto !== item.texto) {
       onEditar(item.id, texto);
     }
+  };
+
+  const salvarEdicao = () => {
+    if (cancelouRef.current) return; // cancelada via Esc
+    salvarTexto();
     setEditando(false);
   };
 
+  // Tab do input para os botões de dificuldade dispara blur: salva o texto,
+  // mas mantém o modo de edição (caso contrário os botões desmontam no meio)
+  const aoSairDoInput = (e) => {
+    if (e.relatedTarget?.dataset?.dificuldade) {
+      if (!cancelouRef.current) salvarTexto();
+      return;
+    }
+    salvarEdicao();
+  };
+
   return (
-    <li className={`item-tarefa ${classeDificuldade} ${item.concluida ? 'concluida' : ''}`}>
+    <li
+      className={`item-tarefa ${classeDificuldade} ${item.concluida ? 'concluida' : ''} ${
+        editando ? 'editando' : ''
+      }`}
+    >
       <div className="conteudo-tarefa">
         <input
           type="checkbox"
@@ -49,7 +67,7 @@ function Tarefa({ item, onAlternar, onRemover, onEditar }) {
             className="input-edicao"
             value={textoEditado}
             onChange={(e) => setTextoEditado(e.target.value)}
-            onBlur={salvarEdicao}
+            onBlur={aoSairDoInput}
             onKeyDown={(e) => {
               if (e.key === 'Enter') salvarEdicao();
               if (e.key === 'Escape') cancelarEdicao();
@@ -68,9 +86,30 @@ function Tarefa({ item, onAlternar, onRemover, onEditar }) {
           </span>
         )}
 
-        <span className={`tag-dificuldade ${classeDificuldade}`}>
-          {rotulo} · {xp} XP
-        </span>
+        {editando ? (
+          <div className="dificuldade-edicao" role="group" aria-label="Editar dificuldade da quest">
+            {Object.entries(DIFICULDADES).map(([chave, { rotulo, xp: xpDificuldade }]) => (
+              <button
+                key={chave}
+                type="button"
+                data-dificuldade={chave}
+                className={`btn-dificuldade ${chave} ${classeDificuldade === chave ? 'ativa' : ''}`}
+                aria-pressed={classeDificuldade === chave}
+                // Impede o blur do input: sem isso o clique desmontaria
+                // o botão antes do onClick disparar
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => onEditarDificuldade(item.id, chave)}
+                title={`${rotulo} · ${xpDificuldade} XP`}
+              >
+                {rotulo}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <span className={`tag-dificuldade ${classeDificuldade}`}>
+            {rotulo} · {xp} XP
+          </span>
+        )}
       </div>
 
       <div className="acoes-tarefa">

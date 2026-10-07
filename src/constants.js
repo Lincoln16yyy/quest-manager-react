@@ -16,6 +16,21 @@ export const STORAGE_KEYS = {
   backupStreak: 'backup-streak-lincoln',
 };
 
+// ==========================================
+// Curva de progressão (central de constantes)
+// ==========================================
+// META (issue #16): alcançar o nível 35 ("Mestre Supremo") em ~1 ano de
+// uso regular — ~1,5 quests/dia com mix de raridades (~18,5 XP/quest)
+// somadas ao bônus de streak. Com XP_POR_NIVEL = 20 o total até o nível 35
+// é 50·35·34·(20/100) = 11.900 XP (~500 quests misturadas por ano).
+// Marcos: nível 5 = 200 XP · 10 = 900 · 20 = 3.800 · 35 = 11.900.
+export const XP_POR_NIVEL = 20;
+export const NIVEL_MAXIMO = 9999;
+
+// Bônus de XP pela sequência: +5% por dia de streak, até +100% (20 dias).
+export const BONUS_STREAK_POR_CENTO = 5;
+export const BONUS_STREAK_MAXIMO = 100;
+
 // O primeiro é o padrão; os estilos ficam em App.css ([data-tema='...'])
 export const TEMAS = [
   { id: 'padrao', emoji: '🕯️', nome: 'Taverna' },
@@ -41,8 +56,10 @@ export const TITULOS = [
   { nivelMinimo: 1, titulo: 'Novato da Guilda' },
 ];
 
-export const obterTitulo = (nivelAtual) =>
-  TITULOS.find(({ nivelMinimo }) => nivelAtual >= nivelMinimo).titulo;
+export const obterTitulo = (nivelAtual) => {
+  const n = Math.max(1, Number.isSafeInteger(nivelAtual) ? nivelAtual : 1);
+  return TITULOS.find(({ nivelMinimo }) => n >= nivelMinimo).titulo;
+};
 
 /**
  * Conquistas desbloqueáveis. `condicao` recebe os stats do jogador:

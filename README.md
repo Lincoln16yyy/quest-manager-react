@@ -1,6 +1,11 @@
 # ⚔️ Quest Manager
 
+[![CI](https://github.com/Lincoln16yyy/quest-manager-react/actions/workflows/ci.yml/badge.svg)](https://github.com/Lincoln16yyy/quest-manager-react/actions/workflows/ci.yml)
+[![Deploy no GitHub Pages](https://github.com/Lincoln16yyy/quest-manager-react/actions/workflows/deploy.yml/badge.svg)](https://github.com/Lincoln16yyy/quest-manager-react/actions/workflows/deploy.yml)
+
 Um gerenciador de tarefas gamificado: transforme as tarefas do seu dia a dia em **quests de RPG**, ganhe XP, suba de nível e desbloqueie títulos na sua guilda.
+
+▶️ **[Demo no GitHub Pages](https://lincoln16yyy.github.io/quest-manager-react/)**
 
 ## ✨ Funcionalidades
 
@@ -47,6 +52,7 @@ Depois acesse [http://localhost:5173](http://localhost:5173) no navegador.
 | `npm run build`   | Gera a versão de produção em `dist/`   |
 | `npm run preview` | Pré-visualiza a build de produção      |
 | `npm run lint`    | Verifica o código com o ESLint         |
+| `npm test`        | Roda os testes unitários (Vitest)      |
 
 ## 🗂️ Estrutura do projeto
 

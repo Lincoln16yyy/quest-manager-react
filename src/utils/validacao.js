@@ -31,5 +31,10 @@ export function sanitizarQuests(lista) {
       concluida: Boolean(q.concluida),
       dificuldade: DIFICULDADES[q.dificuldade] ? q.dificuldade : 'comum',
       ...(typeof q.concluidaEm === 'string' ? { concluidaEm: q.concluidaEm } : {}),
+      // XP total concedido ao concluir (base + bônus de streak): só faz
+      // sentido em quest concluída e é o que desmarcar/apagar devolve
+      ...(q.concluida && Number.isSafeInteger(q.xpGanho) && q.xpGanho > 0
+        ? { xpGanho: q.xpGanho }
+        : {}),
     }));
 }

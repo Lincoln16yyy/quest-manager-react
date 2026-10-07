@@ -11,7 +11,7 @@ import BarraBackup from './components/BarraBackup';
 import SeletorTema from './components/SeletorTema';
 import useLocalStorage from './hooks/useLocalStorage';
 import { STORAGE_KEYS, DIFICULDADES, CONQUISTAS, temaValido } from './constants';
-import { aplicarXp } from './utils/xp';
+import { aplicarXp, bonusStreak } from './utils/xp';
 import { calcularStreak, streakVisivel, chaveData } from './utils/datas';
 import { verificarNovasConquistas } from './utils/conquistas';
 import { montarBackup, validarBackup } from './utils/backup';
@@ -160,6 +160,36 @@ function App() {
     );
   };
 
+  const editarDificuldade = (id, novaDificuldade) => {
+    const item = listaTarefas.find((t) => t.id === id);
+    if (!item) return;
+    const antigaDificuldade = item.dificuldade || 'comum';
+    if (antigaDificuldade === novaDificuldade) return;
+
+    const diferenca =
+      DIFICULDADES[novaDificuldade].xp - DIFICULDADES[antigaDificuldade].xp;
+
+    // REGRA (issue #17): em quest concluída, a troca de dificuldade ajusta
+    // o XP pela DIFERENÇA novo − antigo (pode descer de nível). Em quest
+    // ativa, só muda a tag. xpGanho acompanha a troca para que desmarcar
+    // depois devolva exatamente o total concedido (base + bônus de streak).
+    if (item.concluida && diferenca !== 0) {
+      ganharXp(diferenca);
+    }
+
+    setListaTarefas(
+      listaTarefas.map((t) => {
+        if (t.id !== id) return t;
+        const atualizada = { ...t, dificuldade: novaDificuldade };
+        if (t.concluida) {
+          const baseAntiga = DIFICULDADES[antigaDificuldade].xp;
+          atualizada.xpGanho = (t.xpGanho ?? baseAntiga) + diferenca;
+        }
+        return atualizada;
+      })
+    );
+  };
+
   const removerTarefa = (id) => {
     const indice = listaTarefas.findIndex((t) => t.id === id);
     if (indice === -1) return;
@@ -171,9 +201,9 @@ function App() {
 
     // REGRA: apagar nunca muda o histórico (concluídas/criadas/épicas) —
     // a lista é a visão atual; o histórico é a carreira do jogador.
-    // Apagar uma quest concluída apenas devolve o XP (anti-farm).
+    // Apagar uma quest concluída apenas devolve o XP concedido (anti-farm).
     if (item.concluida) {
-      ganharXp(-xpDaTarefa(item));
+      ganharXp(-(item.xpGanho ?? xpDaTarefa(item)));
     }
     setListaTarefas(listaTarefas.filter((t) => t.id !== id));
 
@@ -204,29 +234,16 @@ function App() {
     const novoStatus = !item.concluida;
     const hoje = chaveData();
 
-    // Nova lista calculada antes: a reversão da streak precisa saber
-    // se sobrou alguma outra quest concluída hoje
-    const novaLista = listaTarefas.map((t) => {
-      if (t.id !== id) return t;
-      const atualizada = { ...t, concluida: novoStatus };
-      if (novoStatus) atualizada.concluidaEm = hoje;
-      else delete atualizada.concluidaEm;
-      return atualizada;
-    });
-
-    // Calcula os próximos valores de cada stat...
-    const progresso = ganharXp(novoStatus ? xpDaTarefa(item) : -xpDaTarefa(item));
-    const novasConcluidas = novoStatus
-      ? historicoConcluidas + 1
-      : Math.max(0, historicoConcluidas - 1);
-
+    // Streak primeiro: o bônus de XP do dia usa a sequência já atualizada
     let novaStreak = streak;
     if (novoStatus) {
       novaStreak = registrarStreak();
     } else {
-      // Desmarcou a última quest concluída de hoje: devolve o crédito da streak
-      const sobrouConcluidaHoje = novaLista.some(
-        (t) => t.concluida && t.concluidaEm === hoje
+      // Desmarcou a última quest concluída de hoje: devolve o crédito da
+      // streak. Esta quest sai da conta (só as OUTRAS concluídas de hoje
+      // continuam segurando a sequência).
+      const sobrouConcluidaHoje = listaTarefas.some(
+        (t) => t.id !== id && t.concluida && t.concluidaEm === hoje
       );
       if (!sobrouConcluidaHoje && ultimoDia === hoje && backupStreak) {
         setStreak(backupStreak.streak);
@@ -234,6 +251,33 @@ function App() {
         novaStreak = backupStreak.streak;
       }
     }
+
+    // XP concedido = base + bônus de streak, guardado em `xpGanho`:
+    // desmarcar/apagar devolve EXATAMENTE o que foi ganho (não dá para
+    // farmar alternando o checkbox). Quests antigas, sem o campo,
+    // receberam apenas a base — o fallback para a base está correto nelas.
+    const base = xpDaTarefa(item);
+    const xpConcedido = novoStatus
+      ? base + bonusStreak(base, novaStreak)
+      : (item.xpGanho ?? base);
+
+    const progresso = ganharXp(novoStatus ? xpConcedido : -xpConcedido);
+    const novasConcluidas = novoStatus
+      ? historicoConcluidas + 1
+      : Math.max(0, historicoConcluidas - 1);
+
+    const novaLista = listaTarefas.map((t) => {
+      if (t.id !== id) return t;
+      const atualizada = { ...t, concluida: novoStatus };
+      if (novoStatus) {
+        atualizada.concluidaEm = hoje;
+        atualizada.xpGanho = xpConcedido;
+      } else {
+        delete atualizada.concluidaEm;
+        delete atualizada.xpGanho;
+      }
+      return atualizada;
+    });
 
     // ...e persiste tudo
     setHistoricoConcluidas(novasConcluidas);
@@ -401,6 +445,7 @@ function App() {
               onAlternar={alternarConcluida}
               onRemover={removerTarefa}
               onEditar={editarTarefa}
+              onEditarDificuldade={editarDificuldade}
             />
           ))}
         </ul>

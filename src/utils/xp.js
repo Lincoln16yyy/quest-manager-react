@@ -1,14 +1,34 @@
 // Lógica pura de progressão: sem estado, sem efeitos colaterais.
 // Fica fácil de testar e de entender.
 
-export const XP_POR_NIVEL = 100;
-export const NIVEL_MAXIMO = 9999;
+import {
+  XP_POR_NIVEL,
+  NIVEL_MAXIMO,
+  BONUS_STREAK_POR_CENTO,
+  BONUS_STREAK_MAXIMO,
+} from '../constants.js';
+
+// As constantes vivem em constants.js (centralizadas); re-exportadas aqui
+// para quem já importava de xp.js não quebrar.
+export { XP_POR_NIVEL, NIVEL_MAXIMO };
 
 export const xpNecessarioPara = (nivel) => nivel * XP_POR_NIVEL;
 
 // XP total acumulado para chegar ao INÍCIO de um nível.
-// Progressão aritmética: 100·1 + 100·2 + ... + 100·(n-1) = 50·n·(n-1)
-const xpAcumuladoAte = (nivel) => 50 * nivel * (nivel - 1);
+// Progressão aritmética: k·1 + k·2 + ... + k·(n-1) = k·n·(n-1)/2
+const xpAcumuladoAte = (nivel) => (XP_POR_NIVEL * nivel * (nivel - 1)) / 2;
+
+/**
+ * Bônus concedido pela sequência diária: +BONUS_STREAK_POR_CENTO% por dia
+ * de streak, limitado a BONUS_STREAK_MAXIMO%. Puro e previsível — o valor
+ * é guardado na quest (xpGanho) para que desmarcar/apagar devolva exatamente
+ * o que foi concedido (sem explorar marcar/desmarcar).
+ */
+export function bonusStreak(xpBase, streak) {
+  const dias = Number.isFinite(streak) ? Math.max(0, Math.floor(streak)) : 0;
+  const percentual = Math.min(dias * BONUS_STREAK_POR_CENTO, BONUS_STREAK_MAXIMO);
+  return Math.round((xpBase * percentual) / 100);
+}
 
 /**
  * Aplica um ganho (ou perda) de XP e retorna o novo { level, xp }.
@@ -21,8 +41,8 @@ export function aplicarXp({ level, xp }, quantidade) {
 
   if (total <= 0) return { level: 1, xp: 0 };
 
-  // Inverte a fórmula: maior n tal que 50·n·(n-1) <= total
-  let novoLevel = Math.floor((1 + Math.sqrt(1 + total / 12.5)) / 2);
+  // Inverte a fórmula: maior n tal que k·n·(n-1)/2 <= total
+  let novoLevel = Math.floor((1 + Math.sqrt(1 + (8 * total) / XP_POR_NIVEL)) / 2);
 
   // Teto ANTES de corrigir: para totais astronômicos (1e300) a estimativa
   // float pode errar por bilhões de níveis — correr o loop sem teto travaria

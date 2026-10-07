@@ -428,6 +428,64 @@ body {
   border-color: var(--primaria);
 }
 
+/* Botões de dificuldade no modo de edição (issue #17) */
+.dificuldade-edicao {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+/* No celular, a linha de edição quebra para os botões não espremerem o texto */
+@media (max-width: 500px) {
+  .item-tarefa.editando .conteudo-tarefa {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .item-tarefa.editando .input-edicao {
+    flex: 1 1 100%;
+  }
+}
+
+.btn-dificuldade {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 3px 7px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.15s, border-color 0.15s;
+}
+
+.btn-dificuldade:hover,
+.btn-dificuldade:focus-visible {
+  opacity: 1;
+}
+
+.btn-dificuldade.ativa {
+  opacity: 1;
+  border-color: currentColor;
+}
+
+.btn-dificuldade.comum {
+  color: #94a3b8;
+  background: rgba(100, 116, 139, 0.15);
+}
+
+.btn-dificuldade.rara {
+  color: #60a5fa;
+  background: rgba(59, 130, 246, 0.15);
+}
+
+.btn-dificuldade.epica {
+  color: #c084fc;
+  background: rgba(168, 85, 247, 0.15);
+}
+
 /* Bordas coloridas para as tarefas (semânticas: iguais em todos os temas) */
 .item-tarefa.comum {
   border-left: 4px solid #64748b; /* Cinza */

@@ -29,6 +29,25 @@ function useLocalStorage(chave, valorInicial, migrar) {
     }
   }, [chave, valor]);
 
+  useEffect(() => {
+    const handleStorage = (e) => {
+      if (e.key !== chave) return;
+      try {
+        const novo = e.newValue === null ? valorInicial : JSON.parse(e.newValue);
+        const normalizado = migrar ? migrar(novo) : novo;
+        setValor((atual) => {
+          const atualNormalizado = migrar ? migrar(atual) : atual;
+          if (JSON.stringify(atualNormalizado) === JSON.stringify(normalizado)) return atual;
+          return normalizado;
+        });
+      } catch {
+        // Ignora erros de parsing
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, [chave, migrar, valorInicial]);
+
   return [valor, setValor];
 }
 
