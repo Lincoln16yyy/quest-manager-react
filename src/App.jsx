@@ -15,12 +15,17 @@ import { aplicarXp } from './utils/xp';
 import { calcularStreak, streakVisivel, chaveData } from './utils/datas';
 import { verificarNovasConquistas } from './utils/conquistas';
 import { montarBackup, validarBackup } from './utils/backup';
+import { gerarId } from './utils/id';
+import {
+  inteiroNaoNegativo,
+  nivelValido,
+  booleano,
+  textoOuNull,
+  listaIds,
+  sanitizarQuests,
+} from './utils/validacao';
 import { tocarLevelUp } from './utils/sons';
 import './App.css';
-
-// Tarefas salvas antes do sistema de ID não têm `id`: geramos um na leitura
-const migrarTarefas = (salvas) =>
-  salvas.map((t) => ({ ...t, id: t.id ?? crypto.randomUUID() }));
 
 const xpDaTarefa = (tarefa) =>
   DIFICULDADES[tarefa.dificuldade || 'comum'].xp;
@@ -35,17 +40,25 @@ function App() {
   const [filtro, setFiltro] = useState('todas');
   const [animacaoLevel, setAnimacaoLevel] = useState(false);
 
-  const [listaTarefas, setListaTarefas] = useLocalStorage(STORAGE_KEYS.quests, [], migrarTarefas);
-  const [level, setLevel] = useLocalStorage(STORAGE_KEYS.level, 1);
-  const [xp, setXp] = useLocalStorage(STORAGE_KEYS.xp, 0);
-  const [historicoConcluidas, setHistoricoConcluidas] = useLocalStorage(STORAGE_KEYS.concluidas, 0);
-  const [totalCriadas, setTotalCriadas] = useLocalStorage(STORAGE_KEYS.criadas, 0);
-  const [streak, setStreak] = useLocalStorage(STORAGE_KEYS.streak, 0);
-  const [ultimoDia, setUltimoDia] = useLocalStorage(STORAGE_KEYS.ultimoDia, null);
-  const [somMudo, setSomMudo] = useLocalStorage(STORAGE_KEYS.somMudo, false);
-  const [conquistas, setConquistas] = useLocalStorage(STORAGE_KEYS.conquistas, []);
-  const [epicasConcluidas, setEpicasConcluidas] = useLocalStorage(STORAGE_KEYS.epicas, 0);
-  const [toast, setToast] = useState(null); // { emoji, titulo, texto } | null
+  // Cada chave passa por um sanitizador: dado corrompido no navegador
+  // é corrigido na leitura em vez de derrubar o app
+  const [listaTarefas, setListaTarefas] = useLocalStorage(STORAGE_KEYS.quests, [], sanitizarQuests);
+  const [level, setLevel] = useLocalStorage(STORAGE_KEYS.level, 1, nivelValido);
+  const [xp, setXp] = useLocalStorage(STORAGE_KEYS.xp, 0, inteiroNaoNegativo);
+  const [historicoConcluidas, setHistoricoConcluidas] = useLocalStorage(STORAGE_KEYS.concluidas, 0, inteiroNaoNegativo);
+  const [totalCriadas, setTotalCriadas] = useLocalStorage(STORAGE_KEYS.criadas, 0, inteiroNaoNegativo);
+  const [streak, setStreak] = useLocalStorage(STORAGE_KEYS.streak, 0, inteiroNaoNegativo);
+  const [ultimoDia, setUltimoDia] = useLocalStorage(STORAGE_KEYS.ultimoDia, null, textoOuNull);
+  const [somMudo, setSomMudo] = useLocalStorage(STORAGE_KEYS.somMudo, false, booleano);
+  const [conquistas, setConquistas] = useLocalStorage(STORAGE_KEYS.conquistas, [], listaIds);
+  const [epicasConcluidas, setEpicasConcluidas] = useLocalStorage(STORAGE_KEYS.epicas, 0, inteiroNaoNegativo);
+  const [toast, setToast] = useState(null); // { emoji, titulo, texto, duracao?, acao? } | null
+  const [maiorNivel, setMaiorNivel] = useLocalStorage(STORAGE_KEYS.maiorNivel, level, nivelValido);
+  const [backupStreak, setBackupStreak] = useLocalStorage(STORAGE_KEYS.backupStreak, null, (v) =>
+    v && typeof v === 'object' && Number.isInteger(v.streak)
+      ? { streak: inteiroNaoNegativo(v.streak), ultimoDia: textoOuNull(v.ultimoDia) }
+      : null
+  );
 
   // Tema: valor inválido salvo no navegador cai no padrão
   const [temaBruto, setTema] = useLocalStorage(STORAGE_KEYS.tema, 'padrao');
@@ -87,7 +100,10 @@ function App() {
   const ganharXp = (quantidade) => {
     const novo = aplicarXp({ level, xp }, quantidade);
 
-    if (novo.level > level) {
+    // Comemora só ao bater o RECORDE de nível: marcar/desmarcar na fronteira
+    // não dispara confete e fanfarra de novo
+    if (novo.level > maiorNivel) {
+      setMaiorNivel(novo.level);
       setAnimacaoLevel(true);
       setTimeout(() => setAnimacaoLevel(false), 1000);
       confetti({
@@ -105,7 +121,7 @@ function App() {
   };
 
   const adicionarTarefa = (texto, dificuldade) => {
-    const novaTarefa = { id: crypto.randomUUID(), texto, concluida: false, dificuldade };
+    const novaTarefa = { id: gerarId(), texto, concluida: false, dificuldade };
     setListaTarefas([novaTarefa, ...listaTarefas]);
     setTotalCriadas((atual) => atual + 1);
   };
@@ -115,6 +131,8 @@ function App() {
     const resultado = calcularStreak({ streak, ultimoDia });
     if (!resultado.mudou) return streak;
 
+    // Guarda o estado anterior: se a quest for desmarcada ainda hoje, revertemos
+    setBackupStreak({ streak, ultimoDia });
     setStreak(resultado.streak);
     setUltimoDia(resultado.ultimoDia);
 
@@ -137,18 +155,40 @@ function App() {
   };
 
   const removerTarefa = (id) => {
-    const item = listaTarefas.find((t) => t.id === id);
-    if (!item) return;
+    const indice = listaTarefas.findIndex((t) => t.id === id);
+    if (indice === -1) return;
+    const item = listaTarefas[indice];
 
-    // Remover uma quest concluída devolve o XP ganho
+    // Snapshot: o "Desfazer" restaura EXATAMENTE o estado anterior
+    // (se outra ação mudar o XP nesse meio-tempo, o desfazer vence — é a intenção)
+    const snapshot = { item, indice, level, xp };
+
+    // REGRA: apagar nunca muda o histórico (concluídas/criadas/épicas) —
+    // a lista é a visão atual; o histórico é a carreira do jogador.
+    // Apagar uma quest concluída apenas devolve o XP (anti-farm).
     if (item.concluida) {
       ganharXp(-xpDaTarefa(item));
-      setHistoricoConcluidas((atual) => Math.max(0, atual - 1));
-      if ((item.dificuldade || 'comum') === 'epica') {
-        setEpicasConcluidas((atual) => Math.max(0, atual - 1));
-      }
     }
     setListaTarefas(listaTarefas.filter((t) => t.id !== id));
+
+    setToast({
+      emoji: '🗑️',
+      titulo: 'Quest removida',
+      texto: item.concluida ? 'O XP dela foi devolvido.' : `"${item.texto}" saiu da lista.`,
+      duracao: 6000,
+      acao: {
+        rotulo: 'Desfazer',
+        onClick: () => {
+          setLevel(snapshot.level);
+          setXp(snapshot.xp);
+          setListaTarefas((atual) => [
+            ...atual.slice(0, snapshot.indice),
+            snapshot.item,
+            ...atual.slice(snapshot.indice),
+          ]);
+        },
+      },
+    });
   };
 
   const alternarConcluida = (id) => {
@@ -157,6 +197,17 @@ function App() {
 
     const novoStatus = !item.concluida;
     const ehEpica = (item.dificuldade || 'comum') === 'epica';
+    const hoje = chaveData();
+
+    // Nova lista calculada antes: a reversão da streak precisa saber
+    // se sobrou alguma outra quest concluída hoje
+    const novaLista = listaTarefas.map((t) => {
+      if (t.id !== id) return t;
+      const atualizada = { ...t, concluida: novoStatus };
+      if (novoStatus) atualizada.concluidaEm = hoje;
+      else delete atualizada.concluidaEm;
+      return atualizada;
+    });
 
     // Calcula os próximos valores de cada stat...
     const progresso = ganharXp(novoStatus ? xpDaTarefa(item) : -xpDaTarefa(item));
@@ -168,7 +219,21 @@ function App() {
         ? epicasConcluidas + 1
         : Math.max(0, epicasConcluidas - 1)
       : epicasConcluidas;
-    const novaStreak = novoStatus ? registrarStreak() : streak;
+
+    let novaStreak = streak;
+    if (novoStatus) {
+      novaStreak = registrarStreak();
+    } else {
+      // Desmarcou a última quest concluída de hoje: devolve o crédito da streak
+      const sobrouConcluidaHoje = novaLista.some(
+        (t) => t.concluida && t.concluidaEm === hoje
+      );
+      if (!sobrouConcluidaHoje && ultimoDia === hoje && backupStreak) {
+        setStreak(backupStreak.streak);
+        setUltimoDia(backupStreak.ultimoDia);
+        novaStreak = backupStreak.streak;
+      }
+    }
 
     // ...e persiste tudo
     setHistoricoConcluidas(novasConcluidas);
@@ -191,9 +256,7 @@ function App() {
       });
     }
 
-    setListaTarefas(
-      listaTarefas.map((t) => (t.id === id ? { ...t, concluida: novoStatus } : t))
-    );
+    setListaTarefas(novaLista);
   };
 
   /** Baixa um arquivo .json com todo o progresso. */
@@ -310,20 +373,23 @@ function App() {
 
       <AbasFiltro filtro={filtro} onMudarFiltro={setFiltro} />
 
-      <ul className="lista">
-        {tarefasFiltradas.map((item) => (
-          <Tarefa
-            key={item.id}
-            item={item}
-            onAlternar={alternarConcluida}
-            onRemover={removerTarefa}
-            onEditar={editarTarefa}
-          />
-        ))}
-        {tarefasFiltradas.length === 0 && (
-          <p className="empty-state">{MENSAGENS_VAZIAS[filtro]}</p>
-        )}
-      </ul>
+      {tarefasFiltradas.length === 0 ? (
+        <p className="empty-state" role="status">
+          {MENSAGENS_VAZIAS[filtro]}
+        </p>
+      ) : (
+        <ul className="lista">
+          {tarefasFiltradas.map((item) => (
+            <Tarefa
+              key={item.id}
+              item={item}
+              onAlternar={alternarConcluida}
+              onRemover={removerTarefa}
+              onEditar={editarTarefa}
+            />
+          ))}
+        </ul>
+      )}
 
       <PainelConquistas desbloqueadas={conquistasExibidas} />
 

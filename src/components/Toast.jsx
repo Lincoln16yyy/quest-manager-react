@@ -1,13 +1,16 @@
 import { useEffect } from 'react';
 
-const DURACAO_TOAST = 4000;
+const DURACAO_PADRAO = 4000;
 
-/** Notificação flutuante genérica: { emoji, titulo, texto }. */
+/**
+ * Notificação flutuante genérica.
+ * toast = { emoji, titulo, texto, duracao?, acao?: { rotulo, onClick } }
+ */
 function Toast({ toast, onFechar }) {
   // Fecha sozinho depois de alguns segundos
   useEffect(() => {
     if (!toast) return;
-    const timer = setTimeout(onFechar, DURACAO_TOAST);
+    const timer = setTimeout(onFechar, toast.duracao ?? DURACAO_PADRAO);
     return () => clearTimeout(timer);
   }, [toast, onFechar]);
 
@@ -22,6 +25,18 @@ function Toast({ toast, onFechar }) {
         <strong>{toast.titulo}</strong>
         <p>{toast.texto}</p>
       </div>
+      {toast.acao && (
+        <button
+          type="button"
+          className="acao-toast"
+          onClick={() => {
+            toast.acao.onClick();
+            onFechar();
+          }}
+        >
+          {toast.acao.rotulo}
+        </button>
+      )}
       <button type="button" onClick={onFechar} aria-label="Fechar notificação">
         ✕
       </button>

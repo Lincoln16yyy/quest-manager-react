@@ -767,6 +767,32 @@ body {
   color: var(--texto);
 }
 
+/* Botão de ação do toast (ex.: "Desfazer") */
+.toast-notificacao > .acao-toast {
+  color: var(--destaque);
+  border: 1px solid color-mix(in srgb, var(--destaque) 40%, transparent);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-weight: bold;
+  font-size: 13px;
+  align-self: center;
+  white-space: nowrap;
+}
+
+.toast-notificacao > .acao-toast:hover {
+  background-color: color-mix(in srgb, var(--destaque) 15%, transparent);
+  color: var(--destaque);
+}
+
+/* Área de toque confortável no celular (WCAG: alvo ≥ 44px) */
+@media (pointer: coarse) {
+  .btn-remover,
+  .btn-editar {
+    width: 44px;
+    height: 44px;
+  }
+}
+
 @media (max-width: 500px) {
   .toast-notificacao {
     right: 12px;
@@ -845,4 +871,62 @@ body {
 .btn-backup:hover {
   border-color: var(--borda-hover);
   color: var(--texto);
+}
+
+/* =========================================
+    TELA DE ERRO (ErrorBoundary)
+    ========================================= */
+
+.tela-erro {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  text-align: center;
+  padding: 20px;
+}
+
+.tela-erro h1 {
+  font-size: 24px;
+}
+
+.tela-erro p {
+  color: var(--texto-suave);
+  max-width: 420px;
+}
+
+.acoes-erro {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.acoes-erro button {
+  background-color: var(--secundaria);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-weight: bold;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.acoes-erro button:hover {
+  background-color: var(--secundaria-hover);
+}
+
+.acoes-erro button.perigo {
+  background-color: transparent;
+  border: 1px solid #ef4444;
+  color: #ef4444;
+}
+
+.acoes-erro button.perigo:hover {
+  background-color: #ef4444;
+  color: white;
 }

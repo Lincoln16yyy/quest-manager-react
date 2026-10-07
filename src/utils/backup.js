@@ -1,4 +1,12 @@
-import { DIFICULDADES, CONQUISTAS, temaValido } from '../constants.js';
+import { CONQUISTAS, temaValido } from '../constants.js';
+import {
+  inteiroNaoNegativo,
+  nivelValido,
+  booleano,
+  textoOuNull,
+  listaIds,
+  sanitizarQuests,
+} from './validacao.js';
 
 // Backup do progresso: funções puras, sem DOM — fáceis de testar.
 
@@ -11,9 +19,6 @@ export function montarBackup(estado) {
     estado,
   };
 }
-
-const inteiroNaoNegativo = (valor, padrao = 0) =>
-  Number.isInteger(valor) && valor >= 0 ? valor : padrao;
 
 /**
  * Valida um backup importado. Filosofia: rigoroso na ESTRUTURA
@@ -34,34 +39,22 @@ export function validarBackup(dados) {
   }
 
   const e = dados.estado;
-  const dificuldadesValidas = Object.keys(DIFICULDADES);
   const idsConhecidos = CONQUISTAS.map((c) => c.id);
-
-  // Quests sem texto válido são descartadas; campos faltantes são normalizados
-  const quests = e.quests
-    .filter((q) => q && typeof q.texto === 'string' && q.texto.trim() !== '')
-    .map((q) => ({
-      id: typeof q.id === 'string' ? q.id : crypto.randomUUID(),
-      texto: q.texto.trim().slice(0, 120),
-      concluida: Boolean(q.concluida),
-      dificuldade: dificuldadesValidas.includes(q.dificuldade) ? q.dificuldade : 'comum',
-    }));
+  const quests = sanitizarQuests(e.quests);
 
   return {
     ok: true,
     estado: {
       quests,
-      level: Number.isInteger(e.level) && e.level >= 1 ? e.level : 1,
+      level: nivelValido(e.level),
       xp: inteiroNaoNegativo(e.xp),
       concluidas: inteiroNaoNegativo(e.concluidas),
       criadas: inteiroNaoNegativo(e.criadas, quests.length),
       epicas: inteiroNaoNegativo(e.epicas),
       streak: inteiroNaoNegativo(e.streak),
-      ultimoDia: typeof e.ultimoDia === 'string' ? e.ultimoDia : null,
-      somMudo: Boolean(e.somMudo),
-      conquistas: Array.isArray(e.conquistas)
-        ? e.conquistas.filter((id) => idsConhecidos.includes(id))
-        : [],
+      ultimoDia: textoOuNull(e.ultimoDia),
+      somMudo: booleano(e.somMudo),
+      conquistas: listaIds(e.conquistas).filter((id) => idsConhecidos.includes(id)),
       tema: temaValido(e.tema) ? e.tema : 'padrao',
     },
   };

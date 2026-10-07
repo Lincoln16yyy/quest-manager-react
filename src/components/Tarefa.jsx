@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { DIFICULDADES } from '../constants';
 
 function Tarefa({ item, onAlternar, onRemover, onEditar }) {
@@ -8,14 +8,23 @@ function Tarefa({ item, onAlternar, onRemover, onEditar }) {
 
   const [editando, setEditando] = useState(false);
   const [textoEditado, setTextoEditado] = useState(item.texto);
+  // Esc marca esta flag: o blur disparado ao desmontar o input não pode salvar
+  const cancelouRef = useRef(false);
 
   const iniciarEdicao = () => {
+    cancelouRef.current = false;
     setTextoEditado(item.texto);
     setEditando(true);
   };
 
+  const cancelarEdicao = () => {
+    cancelouRef.current = true;
+    setEditando(false);
+  };
+
   // Idempotente: pode ser chamada pelo Enter e pelo blur sem efeito duplo
   const salvarEdicao = () => {
+    if (cancelouRef.current) return; // cancelada via Esc
     const texto = textoEditado.trim();
     if (texto !== '' && texto !== item.texto) {
       onEditar(item.id, texto);
@@ -43,7 +52,7 @@ function Tarefa({ item, onAlternar, onRemover, onEditar }) {
             onBlur={salvarEdicao}
             onKeyDown={(e) => {
               if (e.key === 'Enter') salvarEdicao();
-              if (e.key === 'Escape') setEditando(false);
+              if (e.key === 'Escape') cancelarEdicao();
             }}
             maxLength={120}
             autoFocus

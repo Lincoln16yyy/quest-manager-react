@@ -12,6 +12,8 @@ export const STORAGE_KEYS = {
   conquistas: 'conquistas-lincoln',
   epicas: 'stats-epicas-lincoln',
   tema: 'tema-lincoln',
+  maiorNivel: 'maior-nivel-lincoln',
+  backupStreak: 'backup-streak-lincoln',
 };
 
 // O primeiro é o padrão; os estilos ficam em App.css ([data-tema='...'])
